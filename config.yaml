@@ -1,0 +1,12 @@
+# work dir
+work_dir: "/home/lyf/work/apis_cerana_2025"
+result_dir: "result"
+
+# inputs
+hisat2_index: "/home/lyf/work/apis_cerana_2025/genome/index_hisat2/genome_Ac"
+gtf: "/home/lyf/work/apis_cerana_2025/genome/GCF_029169275.1/genomic.gtf"
+dir_fastq: "/home/lyf/work/apis_cerana_2025/fastq_data"
+
+# outputs
+dir_bam: "/home/lyf/work/apis_cerana_2025/bam"
+design_matrix: "/home/lyf/work/apis_cerana_2025/design_matrix.csv"
