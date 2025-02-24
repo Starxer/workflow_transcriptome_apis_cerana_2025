@@ -1,19 +1,22 @@
 # 配置文件路径 config.yaml
 configfile: "config.yaml"
 
+# 预处理
 # 自动读取 fastq 文件夹中的样本
 samples = glob_wildcards(config["dir_fastq"] + "/{sample}_1.fastq.gz").sample
 # 将{sample}按“-”拆分取第一个部分作为时间点
-time_points = [s.split("-")[0] for s in samples]
+experiments = list({s.split("-")[0] for s in samples})
 
 # 规则定义
 rule all:
     input:
         #expand(config["result_dir"] + "/counts/{sample}.counts", sample=samples),
         # config["result_dir"] + "/counts/all_samples.counts",
-        expand(config["result_dir"] + "/diff_genes/DEG_results_{timepoint}.csv", timepoint=time_points),
-        expand(config["result_dir"] + "/diff_genes/volcano_plot_{timepoint}.png", timepoint=time_points)
-        # config["result_dir"] + "/counts/counts.csv"
+        expand(config["result_dir"] + "/diff_genes/DEG_results_{experiment}.csv", experiment=experiments),
+        expand(config["result_dir"] + "/diff_genes/volcano_plot_{experiment}.svg", experiment=experiments),
+        # config["result_dir"] + "/counts/counts.csv",
+        config["result_dir"] + "/diff_genes/all_upregulated.csv",
+        config["result_dir"] + "/diff_genes/all_downregulated.csv",
 
 # 1. fastp质量控制
 rule fastp_qc:
@@ -71,25 +74,38 @@ rule featureCounts:
 # 4. 编辑featureCounts输出文件all_samples.counts
 rule edit_counts_file:
     input:
-        config["result_dir"] + "/counts/all_samples.counts"
+        config["result_dir"] + "/counts/all_samples.counts",
+        design_matrix = config["design_matrix"]
     output:
-        counts = config["result_dir"] + "/counts/counts.csv", # 编辑all_samples.counts
-        design_matrix = config["result_dir"] + "/counts/design_matrix.txt"
+        #counts = config["result_dir"] + "/counts/counts.csv", # 编辑all_samples.counts
+        counts = config["result_dir"] + "/counts/{experiments}.counts.csv",  # 分实验输出
+        new_design = config["result_dir"] + "/counts/{experiments}.design.csv"
     params:
         samples = samples,
+        output_dir = config["result_dir"] + "/counts",
     script:
-        "p4_edit_count_data.py"
+        "scripts/p4_edit_count_data.py"
 
 # 5. DESeq2差异分析 + 火山图绘制
-rule deseq2_analysis:
+rule deg_analysis:
     input:
         counts = rules.edit_counts_file.output.counts,
-        design = rules.edit_counts_file.output.design_matrix
+        design = rules.edit_counts_file.output.new_design
     output:
-        deg = expand(config["result_dir"] + "/diff_genes/DEG_results_{timepoint}.csv", timepoint=time_points),
-        plot = expand(config["result_dir"] + "/diff_genes/volcano_plot_{timepoint}.png", timepoint=time_points)
+        deg = config["result_dir"] + "/diff_genes/DEG_results_{experiments}.csv",
+        plot = config["result_dir"] + "/diff_genes/volcano_plot_{experiments}.svg",
     script:
-        "scripts/deseq2_analysis.R"
+        "scripts/edgeR_analysis.R"
+
+# 6. 差异基因筛选，从所有deg分析结果中提取同样是上调或下调的基因
+rule deg_filter:
+    input:
+        expand(config["result_dir"] + "/diff_genes/DEG_results_{experiment}.csv", experiment=experiments),
+    output:
+        config["result_dir"] + "/diff_genes/all_upregulated.csv",
+        config["result_dir"] + "/diff_genes/all_downregulated.csv"
+    script:
+        "scripts/p5_deg_filter.py"
 
 import os
 from snakemake.io import glob_wildcards
