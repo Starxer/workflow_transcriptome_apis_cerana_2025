@@ -9,3 +9,13 @@ fastq_data/
 *.fasta
 *.bam
 
+design_matrix.csv
+groupby.smk
+md5sum.txt
+ncbi_dataset.zip
+PRJNA1048153_runinfo_Ac.csv
+PRJNA1048153_runinfo.csv
+PRJNA1048153_sra_list.txt
+README.md
+scripts/deseq2_analysis copy.R
+smk.py
