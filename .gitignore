@@ -1,0 +1,11 @@
+# ignore hidden dir
+.*/
+
+genome/
+result/
+sra_data_Ac/
+fastq_data/
+*.fastq
+*.fasta
+*.bam
+
