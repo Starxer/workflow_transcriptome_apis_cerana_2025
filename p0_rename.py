@@ -8,7 +8,7 @@ with open('PRJNA1048153_runinfo_Ac.csv', 'r') as csvfile:
 id_dict = dict(id_map)
 old_ids = id_dict.keys()
 print(id_dict)
-dir_fastq = pathlib.Path('/home/lyf/work/apis_cerana_2025/fastq_data')
+dir_fastq = pathlib.Path('./fastq_data/')
 list_fastq = dir_fastq.glob('*.fastq.gz')
 
 # os修改文件名，将旧ID替换为新ID
